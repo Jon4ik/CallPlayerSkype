@@ -1,0 +1,85 @@
+"Phrases"
+{
+	"plugin_tag"
+	{
+		"ru"	"{lightgreen}[CallSkype]"
+	}
+	
+	"now_you_play"
+	{
+		"ru"		"{green}Теперь Вы можете продолжить игру"
+	}	
+	
+	"player_provided"
+	{
+		"#format"	"{1:N},{2:s}"
+		"ru"		"{green}Игрок {olive}{1} {green}предоставил Skype: {default}{2}"
+	}
+	
+	"you_need_enter_skype"
+	{
+		"ru"	"{green}Чтобы продолжить играть предоставьте Skype админу (Напишите его в чате). \n Напишите {default}!no {green}для отказа."
+	}
+	
+	"skype_already_requested"
+	{
+		"ru"	"{green} У игрока уже запрощен Skype"
+	}
+	
+	"skype_requested"
+	{
+		"ru"	"{green} Skype запрошен"
+	}
+	
+	"time_enter_skype"
+	{
+		"#format"	"{1:d}"
+		"ru"		"У Вас {1} секунд(ы) для предоставления скайпа"
+	}
+	"time_enter_skype_chat"
+	{
+		"#format"	"{1:d}"
+		"ru"		"{green}У Вас {default}{1} {green}секунд(ы) для предоставления скайпа"
+	}
+	
+	"ok_enter_skype_chat"
+	{
+		"ru"	"{green} Отлично. Напишите его в чате!"
+	}
+	
+	"menu_title"
+	{
+		"ru"	"Вы согласны предоставить Skype админу?:"
+	}
+	
+	"menu_text"
+	{
+		"ru"	"Подумайте прежде чем жать \"нет\"!"
+	}
+	
+	"menu_yes"
+	{
+		"ru"	"Да"
+	}
+	
+	"menu_no"
+	{
+		"ru"	"Нет"
+	}
+	
+	"strlen_skype"
+	{
+		"#format"	"{1:d}"
+		"ru"	"{green}Слишком мало симвалов для скайпа! Необходимо: {default}{1}"
+	}
+	
+	"again_menu_title"
+	{
+		"ru"	"Запрос Skype:"
+	}
+	
+	"ok_enter_skype_menu"
+	{
+		"ru"	"Отлично. Напишите его в чате!"
+	}
+}
