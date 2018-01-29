@@ -26,9 +26,7 @@ DisplaySkypeMenu(client)
 {
 	new Handle:menu = CreateMenu(MenuHandler_Skype);
 	
-	decl String:title[100];
-	Format(title, sizeof(title), "Запросить Skype игрока:", client);
-	SetMenuTitle(menu, title);
+	SetMenuTitle(menu, "Запросить Skype игрока:", client);
 	SetMenuExitBackButton(menu, true);
 	
 	UTIL_AddTargetsToMenu3(menu);
@@ -101,7 +99,7 @@ public MenuHandler_Skype(Handle:menu, MenuAction:action, param1, param2)
 				GetClientName(param1, AdminName, sizeof(AdminName));
 				GetClientName(target, PlayerName, sizeof(PlayerName));
 			
-				LogToFile(LogPath, "Администратор %s запрос скайп игрока %s", AdminName, PlayerName);
+				LogToFile(LogPath, "Администратор %s запросил скайп игрока %s (%i|%i)", AdminName, PlayerName, target,userid);
 			}
 			
 			SkypeZapros(target);		

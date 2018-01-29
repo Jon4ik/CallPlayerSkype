@@ -17,7 +17,7 @@ public SkypeZapros(client)
 
 DisplayZaprosSkypeMenu(client)
 {
-	decl String:Title[100], String: Text[100], String: Yes[10], String: No[10];
+	decl String: Title[100], String: Text[100], String: Yes[10], String: No[10];
 	FormatEx(Title, sizeof(Title), "%t", "menu_title");
 	FormatEx(Text, sizeof(Text), "%t", "menu_text");
 	FormatEx(Yes, sizeof(Yes), "%t", "menu_yes");
@@ -28,23 +28,25 @@ DisplayZaprosSkypeMenu(client)
 	DrawPanelText(panel, Text);
 	DrawPanelItem(panel, Yes);
 	DrawPanelItem(panel, No);
- 
 	SendPanelToClient(panel, client, Select_Menu, 0);
-	
 	CloseHandle(panel);
 }
+
 
 public CreateTimerBan(client)
 {
 	if(iTimerDuration > 0)
 	{
 		count[client] = iTimerDuration;
-		Ban_Timer[client] = CreateTimer(1.0, Timer_Ban, client, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);	
+		Ban_Timer[client] = CreateTimer(1.0, Timer_Ban, GetClientUserId(client), TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);	
+		LogToFile(LogPath, "[DEBUG] Создание таймера для игрока %N (%i|%i)",client, client, GetClientUserId(client));
 	}
 }
 
-public Action:Timer_Ban(Handle:timer, any:client)
+public Action:Timer_Ban(Handle:timer, any:userid)
 {  
+	new client = GetClientOfUserId(userid);
+	
 	if(count[client] == 0)
 	return Plugin_Stop;  
 		 
@@ -112,11 +114,10 @@ public Select_Menu(Handle:menu, MenuAction:action, client, option)
 CreateAgainZaprops(client)
 {
 	new Handle:hMBC = CreateMenu(MC);
-	decl String:Title[100], String: Enter[255];
-	FormatEx(Title, sizeof(Title), "%t", "again_menu_title");
+	decl String: Enter[255];
 	FormatEx(Enter, sizeof(Enter), "%t", "ok_enter_skype_menu");
 
-	SetMenuTitle(hMBC, Title);
+	SetMenuTitle(hMBC, "%T", "again_menu_title");
 	
 	AddMenuItem(hMBC, "1", Enter, ITEMDRAW_DISABLED);
 

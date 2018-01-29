@@ -25,7 +25,7 @@ public Plugin:myinfo =
 {
 	name = "Call Player Skype",
 	author = "Jon4ik (http://steamcommunity.com/id/jon4ik/)",
-	version = "BETA 1.4"
+	version = "BETA 1.4.1"
 };
 
 public OnPluginStart() 
@@ -81,7 +81,7 @@ public Action: Command_test(client, a)
 
 public OnLibraryAdded(const String:name[])
 { 
-	LogMessage("Add lib: %s", name);
+	//LogMessage("Add lib: %s", name);
 	if (StrEqual(name, "sourcebans")) g_IsSb = true; 
 }
 
@@ -169,7 +169,7 @@ public Action:ChatHook(client, args)
 			decl String: PlayerName[32];
 			GetClientName(client, PlayerName, sizeof(PlayerName));
 			
-			LogToFile(LogPath, "Игрок %s предоставил skype: %s",PlayerName,  Text);
+			LogToFile(LogPath, "Игрок %s (%i|%i) предоставил skype: %s",PlayerName, client, GetClientUserId(client), Text);
 		}
 				
 		if (Ban_Timer[client] != INVALID_HANDLE) 
@@ -239,6 +239,6 @@ public BanPlayer(client)
 		decl String: PlayerName[32];
 		GetClientName(client, PlayerName, sizeof(PlayerName));
 			
-		LogToFile(LogPath, "Игрок %s отказался предоставить skype и был забанен на %i мин",PlayerName,  iBanDuration);
+		LogToFile(LogPath, "Игрок %s (%i|%i) отказался предоставить skype и был забанен на %i мин",PlayerName, client, GetClientUserId(client), iBanDuration);
 	}
 }
