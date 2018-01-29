@@ -11,3 +11,8 @@ CallPlayerSkype - плагин позволяющий администратор
 ![screen2](https://s8.hostingkartinok.com/uploads/images/2017/06/92c86dbaaa55f795e5100fb11a2e0a0c.jpg)
 ![screen3](https://s8.hostingkartinok.com/uploads/images/2017/06/51b738c5155dd24f296d52e2fae5d98b.jpg)
 ![screen4](https://s8.hostingkartinok.com/uploads/images/2017/06/6d0e69a2946c5ba755260656dcd62ed4.jpg)
+
+# Поддержка разработки:
+* ЯндексДеньги - 410011807128321
+* WebMoney - R308981403112
+* Steam - https://steamcommunity.com/tradeoffer/new/?partner=137766484&token=D0iB8uno
