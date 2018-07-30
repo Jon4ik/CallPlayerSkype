@@ -1,31 +1,38 @@
-#pragma semicolon 1
-
 #include <sourcemod>
 #include <adminmenu>
+#include <clientprefs>
+#include <colors>
 
 #undef REQUIRE_PLUGIN
 #include <sourcebans>
 #define REQUIRE_PLUGIN
 
-#include <clientprefs>
-#include <colors>
+#pragma semicolon 1
 
-new Handle:g_TopMenu = INVALID_HANDLE, Handle: g_CallSkype, Handle: Ban_Timer[MAXPLAYERS+1];
+new Handle:g_TopMenu = INVALID_HANDLE, 
+	Handle:g_CallSkype, 
+	Handle:Ban_Timer[MAXPLAYERS+1];
+	
+static const String: LogPath[] = "addons/sourcemod/logs/callplayerskype.log";
 
-new ashomode, iBanDuration, zaprosinfo, iTimerDuration, showmode, strlenskype, logs, count[MAXPLAYERS+1];
+new bool:g_WriteSkype[MAXPLAYERS+1], 
+	bool:g_IsSb = false;
 
-new String: LogPath[PLATFORM_MAX_PATH];
-
-new bool: g_WriteSkype[MAXPLAYERS+1], bool: g_IsSb = false;
-
-#include "callplayerskype/adminmenu.sp"
-#include "callplayerskype/zapros.sp"
+new ashomode, 
+	iBanDuration, 
+	zaprosinfo, 
+	iTimerDuration, 
+	showmode, 
+	strlenskype, 
+	logs, 
+	count[MAXPLAYERS+1];
+	
 
 public Plugin:myinfo = 
 {
 	name = "Call Player Skype",
 	author = "Jon4ik (http://steamcommunity.com/id/jon4ik/)",
-	version = "BETA 1.4.1"
+	version = "BETA 1.4.2"
 };
 
 public OnPluginStart() 
@@ -63,8 +70,7 @@ public OnPluginStart()
 	HookConVarChange((hCvar = CreateConVar("sm_callskype_logs", "1", "Вести лог файл? \n 0) Нет \n 1) Да")), OnLogsChanged);
 	logs = GetConVarInt(hCvar);
 	
-	BuildPath(Path_SM, LogPath, sizeof(LogPath), "logs/callplayerskype.log");
-		
+	
 	AutoExecConfig(true, "CallPlayerSkype");
 	
 	LoadTranslations("CallPlayerSkype.phrases");
@@ -81,7 +87,6 @@ public Action: Command_test(client, a)
 
 public OnLibraryAdded(const String:name[])
 { 
-	//LogMessage("Add lib: %s", name);
 	if (StrEqual(name, "sourcebans")) g_IsSb = true; 
 }
 
@@ -156,7 +161,7 @@ public Action:ChatHook(client, args)
 				CPrintToChat(client, "%t %t", "plugin_tag", "strlen_skype", strlenskype);
 				ClientCommand(client, "play buttons/button11.wav"); 
 					
-				return Plugin_Continue;
+				return Plugin_Handled;
 			}
 		}
 		
@@ -166,10 +171,7 @@ public Action:ChatHook(client, args)
 		
 		if(logs == 1)
 		{
-			decl String: PlayerName[32];
-			GetClientName(client, PlayerName, sizeof(PlayerName));
-			
-			LogToFile(LogPath, "Игрок %s (%i|%i) предоставил skype: %s",PlayerName, client, GetClientUserId(client), Text);
+			LogToFile(LogPath, "Игрок %L предоставил skype: %s", client, Text);
 		}
 				
 		if (Ban_Timer[client] != INVALID_HANDLE) 
@@ -204,17 +206,14 @@ public Action:ChooseTeam(client, const String:command[], args)
 
 public OnClientPostAdminCheck(client)
 {
-	if(client && !IsFakeClient(client))
+	if(client && !IsFakeClient(client) && AreClientCookiesCached(client))
 	{
-		if (AreClientCookiesCached(client))
-		{
-			new String: sCookieValue[12];
+		new String: sCookieValue[12];
 		
-			GetClientCookie(client, g_CallSkype, sCookieValue, sizeof(sCookieValue));
-			new cookieValue = StringToInt(sCookieValue);
+		GetClientCookie(client, g_CallSkype, sCookieValue, sizeof(sCookieValue));
+		new cookieValue = StringToInt(sCookieValue);
 			
-			g_WriteSkype[client] = (cookieValue == 1) ? true : false;
-		}	
+		g_WriteSkype[client] = (cookieValue == 1) ? true : false;
 	}
 }
 
@@ -235,10 +234,267 @@ public BanPlayer(client)
 	SetClientCookie(client, g_CallSkype, "0");
 		
 	if(logs == 1)
-	{
-		decl String: PlayerName[32];
-		GetClientName(client, PlayerName, sizeof(PlayerName));
-			
-		LogToFile(LogPath, "Игрок %s (%i|%i) отказался предоставить skype и был забанен на %i мин",PlayerName, client, GetClientUserId(client), iBanDuration);
+	{			
+		LogToFile(LogPath, "Игрок %L отказался предоставить skype и был забанен на %i мин", client, iBanDuration);
 	}
+}
+
+public OnAdminMenuReady(Handle:topmenu) 
+{ 
+	if (topmenu == INVALID_HANDLE || topmenu == g_TopMenu) return; 
+
+	g_TopMenu = topmenu; 
+
+	new TopMenuObject:MyCat = FindTopMenuCategory(g_TopMenu, ADMINMENU_PLAYERCOMMANDS);
+	
+	if (MyCat != INVALID_TOPMENUOBJECT)
+	{
+		AddToTopMenu(g_TopMenu, "sm_callskype", TopMenuObject_Item, AdminMenu_CallBack, MyCat, "sm_callskype", ADMFLAG_CHAT);
+	}
+} 
+
+public AdminMenu_CallBack(Handle:topmenu, TopMenuAction:action, TopMenuObject:object_id, param, String:buffer[], maxlength) 
+{ 
+	if (action == TopMenuAction_DisplayOption) 	Format(buffer, maxlength, "Запросить Skype");
+
+	else if (action == TopMenuAction_SelectOption) 
+	{ 
+		DisplaySkypeMenu(param);
+	} 
+} 
+
+DisplaySkypeMenu(client)
+{
+	new Handle:menu = CreateMenu(MenuHandler_Skype);
+	
+	SetMenuTitle(menu, "Запросить Skype игрока:", client);
+	SetMenuExitBackButton(menu, true);
+	
+	UTIL_AddTargetsToMenu3(menu);
+	
+	DisplayMenu(menu, client, MENU_TIME_FOREVER);
+}
+
+
+public MenuHandler_SkypeList(Handle:menu, MenuAction:action, param1, param2)
+{
+	if (action == MenuAction_End)
+	{
+		CloseHandle(menu);
+	}
+	
+	else if (action == MenuAction_Cancel)
+	{
+		if (param2 == MenuCancel_ExitBack && g_TopMenu != INVALID_HANDLE)
+		{
+			DisplayTopMenu(g_TopMenu, param1, TopMenuPosition_LastCategory);
+		}
+	}
+}
+
+public MenuHandler_Skype(Handle:menu, MenuAction:action, param1, param2)
+{
+	if (action == MenuAction_End)
+	{
+		CloseHandle(menu);
+	}
+	else if (action == MenuAction_Cancel)
+	{
+		if (param2 == MenuCancel_ExitBack && g_TopMenu != INVALID_HANDLE)
+		{
+			DisplayTopMenu(g_TopMenu, param1, TopMenuPosition_LastCategory);
+		}
+	}
+	else if (action == MenuAction_Select)
+	{
+		decl String:info[32];
+		new userid, target;
+		
+		GetMenuItem(menu, param2, info, sizeof(info));
+		userid = StringToInt(info);
+
+		if ((target = GetClientOfUserId(userid)) == 0)
+		{
+			CPrintToChat(param1, "%t %t", "plugin_tag", "Player no longer available");
+		}
+		else if (!CanUserTarget(param1, target))
+		{
+			CPrintToChat(param1, "%t %t", "plugin_tag", "Unable to target");
+		}
+		else if(g_WriteSkype[target])
+		{
+			CPrintToChat(param1, "%t %t", "plugin_tag", "skype_already_requested");
+			ClientCommand(param1, "play buttons/button11.wav"); 
+		}
+		else
+		{
+			g_WriteSkype[target] = true;
+			if (GetClientTeam(target) > 1) ChangeClientTeam(target, 1);
+			CPrintToChat(param1, "%t %t", "plugin_tag", "skype_requested");
+			
+			if(logs == 1)
+			{			
+				LogToFile(LogPath, "Администратор %L запросил скайп игрока %L", param1, target);
+			}
+			
+			SkypeZapros(target);		
+			
+			SetClientCookie(target, g_CallSkype, "1");
+		}
+		
+		if(target != param1) DisplaySkypeMenu(param1);
+	}
+}
+
+public SkypeZapros(client)
+{
+	switch(zaprosinfo)
+	{
+		case 1:
+		{
+			CreateTimerBan(client);
+			PrintToChat(client, "Админ просит предоставить Ваш Skype");
+		}
+				
+		case 2:
+		{
+			DisplayZaprosSkypeMenu(client);
+		}
+	}
+}
+
+DisplayZaprosSkypeMenu(client)
+{
+	decl String: Title[100], String: Text[100], String: Yes[10], String: No[10];
+	FormatEx(Title, sizeof(Title), "%t", "menu_title");
+	FormatEx(Text, sizeof(Text), "%t", "menu_text");
+	FormatEx(Yes, sizeof(Yes), "%t", "menu_yes");
+	FormatEx(No, sizeof(No), "%t", "menu_no");
+	
+	new Handle:panel = CreatePanel();
+	SetPanelTitle(panel, Title);
+	DrawPanelText(panel, Text);
+	DrawPanelItem(panel, Yes);
+	DrawPanelItem(panel, No);
+	SendPanelToClient(panel, client, Select_Menu, 0);
+	CloseHandle(panel);
+}
+
+
+public CreateTimerBan(client)
+{
+	if(iTimerDuration > 0)
+	{
+		count[client] = iTimerDuration;
+		Ban_Timer[client] = CreateTimer(1.0, Timer_Ban, GetClientUserId(client), TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);	
+		//LogToFile(LogPath, "[DEBUG] Создание таймера для игрока %N (%i|%i)",client, client, GetClientUserId(client));
+	}
+}
+
+public Action:Timer_Ban(Handle:timer, any:userid)
+{  
+	new client = GetClientOfUserId(userid);
+	
+	if(count[client] == 0)
+	return Plugin_Stop;  
+		 
+	count[client]--;
+	
+	if(count[client] == 0)
+	{
+		BanPlayer(client);
+	}
+	
+	if (IsClientInGame(client) && !IsFakeClient(client))
+	{
+		switch(showmode)
+		{
+			case 1:
+			{
+				CPrintToChat(client, "%t %t", "plugin_tag", "time_enter_skype_chat", count[client]);
+			}
+			
+			case 2:
+			{
+				PrintHintText(client, "%t", "time_enter_skype", count[client]);
+			}
+			
+			case 3:
+			{
+				CPrintToChat(client, "%t %t", "plugin_tag", "time_enter_skype_chat", count[client]);
+				PrintHintText(client, "%t", "time_enter_skype", count[client]);
+			}
+		}
+	}
+      	 
+	return Plugin_Continue; 
+} 
+
+public Select_Menu(Handle:menu, MenuAction:action, client, option) 
+{ 	
+	if(action == MenuAction_Select)
+	{
+		switch(option)
+		{
+			case 1:
+			{
+				if (ashomode == 1)
+				{
+					CPrintToChat(client, "%t %t", "plugin_tag", "ok_enter_skype_chat");
+				}
+				else
+				{
+					CreateAgainZaprops(client);
+				}
+				
+				
+				CreateTimerBan(client);
+			}
+				
+			case 2:
+			{
+				BanPlayer(client);
+			}
+		}
+	}
+}
+
+CreateAgainZaprops(client)
+{
+	decl String: Title[100], String: Enter[100];
+	FormatEx(Title, sizeof(Title), "%t", "again_menu_title");
+	FormatEx(Enter, sizeof(Enter), "%t", "ok_enter_skype_menu");
+	
+	new Handle:hMBC = CreatePanel();
+	SetPanelTitle(hMBC, Title);
+	DrawPanelText(hMBC, Enter);
+	SendPanelToClient(hMBC, client, Select_Menu, iBanDuration);
+	CloseHandle(hMBC);
+}
+
+stock UTIL_AddTargetsToMenu3(Handle:menu)
+{	
+	decl String:user_id[12];
+	decl String:name[MAX_NAME_LENGTH];
+	decl String:display[MAX_NAME_LENGTH+12];
+	
+	new num_clients;
+	
+	for (new i = 1; i <= MaxClients; i++)
+	{
+		if (!IsClientConnected(i) || IsClientInKickQueue(i) || !IsClientInGame(i) || IsFakeClient(i) || GetUserAdmin(i) != INVALID_ADMIN_ID)
+		{
+			continue;
+		}
+						
+		IntToString(GetClientUserId(i), user_id, sizeof(user_id));
+		GetClientName(i, name, sizeof(name));
+		Format(display, sizeof(display), "%s (%s)", name, user_id);
+		AddMenuItem(menu, user_id, display);
+		num_clients++;
+	}
+	
+	if (num_clients == 0)	AddMenuItem(menu, "", "Нет доступных игроков", ITEMDRAW_DISABLED);
+	
+	return num_clients;
 }
