@@ -32,7 +32,7 @@ public Plugin:myinfo =
 {
 	name = "Call Player Skype",
 	author = "Jon4ik (http://steamcommunity.com/id/jon4ik/)",
-	version = "BETA 1.4.2"
+	version = "BETA 1.4.2 fix 1"
 };
 
 public OnPluginStart() 
@@ -212,8 +212,11 @@ public OnClientPostAdminCheck(client)
 		
 		GetClientCookie(client, g_CallSkype, sCookieValue, sizeof(sCookieValue));
 		new cookieValue = StringToInt(sCookieValue);
-			
-		g_WriteSkype[client] = (cookieValue == 1) ? true : false;
+		
+		if(sCookieValue[0])
+		{
+		 g_WriteSkype[GetClientOfUserId(client)] = (cookieValue == 1) ? true : false;
+		}
 	}
 }
 
